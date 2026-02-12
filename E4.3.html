@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Krisna Exam System - Positioning Admin Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --text: #2d3436;
+  --muted: #636e72;
+  --teal: #008080;
+  --teal-light: #e0f2f2;
+  --correct: #27ae60;
+  --wrong: #d63031;
+  --border: #dfe6e9;
+  --admin-color: #6c5ce7;
+}
+
+* { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+header { background: var(--card); border-bottom: 3px solid var(--teal); box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
+.header-inner { max-width: 1200px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
+h1 { margin: 0; color: var(--teal); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+.card { background: var(--card); border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+
+/* GRID SYSTEM */
+.exam-grid { display: grid; grid-template-columns: 260px 1fr 260px; gap: 20px; align-items: start; }
+.sidebar-left, .sidebar-right { position: sticky; top: 80px; background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+.sidebar-left { border-left: 4px solid var(--teal); }
+.sidebar-right { border-right: 4px solid var(--teal); }
+
+.timer-box { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 15px 0; padding: 10px; background: var(--bg); border-radius: 5px; border: 1px solid var(--border); }
+
+.nav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+.nav-btn { padding: 8px 0; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; text-align: center; cursor: pointer; font-size: 0.8rem; }
+.nav-btn.answered { background: var(--teal); color: white; border-color: var(--teal); }
+
+.option { display: block; border: 1px solid var(--border); padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; position: relative; }
+.option.selected { border-color: var(--teal); background: var(--teal-light); font-weight: 600; }
+.correct-view { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+.wrong-view { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+
+button { background: var(--teal); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+button.secondary { background: var(--muted); }
+button.danger { background: var(--wrong); }
+button.admin-btn { background: var(--admin-color); width: auto; font-size: 0.8rem; padding: 5px 10px; margin-left: 5px; }
+
+.hidden { display: none !important; }
+.badge-essay { background: #e67e22; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
+
+@media (max-width: 900px) {
+    .exam-grid { display: block; }
+    .sidebar-left, .sidebar-right { position: relative; top: 0; width: 100%; margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-map-marked-alt" style="color:var(--teal); font-size:1.5rem;"></i>
+        <h1>Krisna Exam System <small style="font-size:0.6rem; opacity:0.7;">E4.3 Positioning Measurement Methods and Techniques</small></h1>
+    </div>
+    <div id="userDisplay" style="font-weight:bold; color:var(--muted);"></div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="startScreen" class="card" style="max-width:500px; margin: 40px auto; text-align:center;">
+    <h2 style="color:var(--teal)">Candidate Login</h2>
+    <input type="text" id="candidateName" placeholder="Full Name" style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px;">
+    <button onclick="login()">Enter System <i class="fas fa-sign-in-alt"></i></button>
+  </div>
+
+  <div id="menuScreen" class="hidden">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Module Selection</h3>
+            <button class="secondary" style="width:auto;" onclick="location.reload()">Logout</button>
+        </div>
+        
+        <div id="adminInstruction" class="hidden" style="background:#eef; color:var(--admin-color); padding:10px; border-radius:5px; margin-bottom:15px; font-size:0.9rem;">
+            <i class="fas fa-user-shield"></i> <strong>Admin Mode:</strong> Click the module below to view the <strong>Master Answer Key</strong>.
+        </div>
+
+        <button id="mainModuleBtn" onclick="handleModuleClick()" style="background:#fff3cd; color:#e67e22; border:2px solid #e67e22; padding:25px; font-size:1.1rem; text-align:left;">
+            <i class="fas fa-crosshairs"></i> E4.3 Positioning Measurement Methods and Techniques
+        </button>
+    </div>
+    
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">Session History</h3>
+            <div id="adminTools" class="hidden">
+                <button class="admin-btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export</button>
+                <button class="admin-btn danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Wipe</button>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead><tr style="background:#f8f9fa;">
+                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:left;">Name</th>
+                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:left;">Score</th>
+                    <th style="padding:10px; border-bottom:1px solid #ddd; text-align:left;">Date</th>
+                    <th id="adminCol" class="hidden" style="padding:10px; border-bottom:1px solid #ddd; text-align:center;">Action</th>
+                </tr></thead>
+                <tbody id="histBody"></tbody>
+            </table>
+        </div>
+    </div>
+  </div>
+
+  <div id="examScreen" class="exam-grid hidden">
+    <aside class="sidebar-left">
+        <h3 id="displayModule">E4.3 Positioning</h3>
+        <p id="displayUser" style="font-size:0.8rem; color:var(--muted);"></p>
+        <hr>
+        <span style="font-size:0.75rem; text-transform:uppercase; color:var(--muted);">Time Elapsed</span>
+        <div class="timer-box" id="timerDisplay">00:00</div>
+        <button onclick="exitExam()" class="secondary">Exit</button>
+    </aside>
+
+    <section id="qBox"></section>
+
+    <aside class="sidebar-right">
+        <h4>Question Map</h4>
+        <div id="navGrid" class="nav-grid"></div>
+        <button onclick="submitExam()" style="padding:15px;">SUBMIT EXAM <i class="fas fa-paper-plane"></i></button>
+    </aside>
+  </div>
+
+  <div id="resultScreen" class="hidden card">
+    <div style="text-align:center; padding:20px;">
+        <h2 id="resTitle">Review</h2>
+        <div id="resScore" style="font-size:4rem; color:var(--teal); font-weight:800;">0%</div>
+        <p id="resInfo" style="color:var(--muted);"></p>
+        <button onclick="location.reload()" style="width:auto; padding:10px 30px;">Return to Menu</button>
+    </div>
+    <div id="reviewBox"></div>
+  </div>
+</div>
+
+<script>
+// DATABASE (15 MCQ + 10 Essay) - REVISED E4.3
+const BANK = [
+    // MCQs
+    { q: "In a Geodetic Coordinate System, a point on the Earth’s surface is expressed using:", o: ["Easting, Northing, Elevation", "X, Y, Z local topocentric", "Latitude, Longitude, and ellipsoidal height", "Azimuth and horizontal distance"], a: 2 },
+    { q: "The three fundamental parameters that define a Coordinate Reference System are:", o: ["Datum, projection, and scale", "Origin location, axis orientation, and measurement unit", "Latitude, longitude, and geoid", "Ellipsoid, geoid, and gravity"], a: 1 },
+    { q: "The horizontal distance between two known coordinate points A(X₁,Y₁) and B(X₂,Y₂) is computed using:", o: ["d = (X₂ – X₁) + (Y₂ – Y₁)", "d = tan⁻¹ ((X₂ – X₁)/(Y₂ – Y₁))", "d = √[(X₂ – X₁)² + (Y₂ – Y₁)²]", "d = sin α + cos α"], a: 2 },
+    { q: "In traverse computation, the angular condition for a closed polygon with n sides is:", o: ["Σβ = n × 180°", "Σβ = (n + 2) × 180°", "Σβ = (n − 2) × 180°", "Σβ = (2n − 4) × 360°"], a: 2 },
+    { q: "The Bowditch adjustment distributes coordinate corrections:", o: ["Equally to all lines", "Proportionally to angle magnitude", "Proportionally to the length of each traverse leg", "Based on azimuth direction"], a: 2 },
+    { q: "In GNSS positioning, pseudorange is determined by:", o: ["Phase center variation", "Doppler frequency", "Speed of light multiplied by signal travel time", "Carrier wavelength divided by frequency"], a: 2 },
+    { q: "Double difference processing in relative GNSS positioning eliminates:", o: ["Tropospheric delay only", "Multipath only", "Satellite clock error and receiver clock error", "Antenna phase center offset"], a: 2 },
+    { q: "The orthometric height (H) is obtained from GNSS ellipsoidal height (h) using:", o: ["H = h + N", "H = h − N", "H = N − h", "H = h × N"], a: 1 },
+    { q: "In GNSS error sources, ionospheric delay can reach magnitudes up to:", o: ["Millimeters", "Centimeters", "2–20 meters", "Up to 100 meters"], a: 3 },
+    { q: "In RTK positioning, the recommended baseline length is generally:", o: ["< 100 km", "< 50 km", "< 20 km", "Unlimited"], a: 2 },
+    { q: "In GNSS network planning, the number of free baselines is approximated by:", o: ["b = r − 1", "b = n × r", "b = s(r − 1)", "b = n − 2"], a: 2 },
+    { q: "In classical positioning, the Polar Method determines coordinates using:", o: ["Two angles only", "Two distances only", "Azimuth and horizontal distance", "Vertical angle only"], a: 2 },
+    { q: "In hydrographic vertical control, the tidal datum commonly referenced is:", o: ["Mean Sea Level", "Highest Astronomical Tide", "Chart Datum / Mean Lower Low Water", "Ellipsoidal datum"], a: 2 },
+    { q: "In GNSS observation, multi-constellation receivers improve positioning by:", o: ["Increasing antenna height", "Reducing satellite orbit", "Improving satellite geometry and redundancy", "Eliminating troposphere completely"], a: 2 },
+    { q: "According to Earth modeling in geodesy, GNSS positioning uses:", o: ["Geoid model only", "Spherical Earth", "Physical Earth surface", "Rotational ellipsoid model"], a: 3 },
+    
+    // ESSAYS
+    { q: "Explain the difference between a Coordinate Reference System and a Coordinate Reference Frame.", type: "essay", e: "A Coordinate Reference System (CRS) is a theoretical framework defining origin, axis orientation, and measurement units. A Coordinate Reference Frame (CRF) is the physical realization of that system through observed and monumented control points, enabling practical coordinate determination." },
+    { q: "Derive and explain the geometric conditions of a closed traverse.", type: "essay", e: "For a closed traverse: Angular condition: Σβ = (n − 2) × 180°. Coordinate condition: Σ(d sin α) = 0 and Σ(d cos α) = 0. If misclosures exist, angular misclosure is distributed equally, and coordinate misclosure is corrected proportionally using Bowditch adjustment." },
+    { q: "Explain the principle of GNSS double difference processing.", type: "essay", e: "Double difference subtracts observations between two receivers and two satellites. This removes satellite clock errors and receiver clock errors, significantly reducing systematic bias. It forms the basis of high-precision relative positioning such as RTK and static GNSS." },
+    { q: "Describe the main sources of GNSS positioning errors.", type: "essay", e: "Main error sources include: Satellite orbit error, Satellite clock error, Receiver clock error, Ionospheric delay, Tropospheric delay, Multipath, and Antenna phase center variation." },
+    { q: "Explain the concept of pseudorange and why it contains error.", type: "essay", e: "Pseudorange is the apparent distance computed by multiplying signal travel time by the speed of light. It contains errors because clocks between satellite and receiver are not perfectly synchronized, and atmospheric delays and multipath distort signal propagation." },
+    { q: "Describe the difference between Relative Positioning and Precise Point Positioning (PPP).", type: "essay", e: "Relative positioning uses two receivers and double difference to eliminate clock errors (mm-cm accuracy). PPP uses a single receiver with precise ephemeris/clock products and models atmospheric errors (cm-dm accuracy), requiring convergence time." },
+    { q: "Explain the role of geoid undulation in height determination.", type: "essay", e: "Geoid undulation (N) represents the separation between the ellipsoid and geoid. GNSS measures ellipsoidal height (h). To obtain orthometric height (H), which relates to mean sea level, the equation H = h − N is used." },
+    { q: "Discuss GNSS network design considerations for high precision surveys.", type: "essay", e: "Considerations include: Baseline length (<20 km), Loop closure for QC, Even distribution of control points, Adequate satellite geometry, Sufficient observation time, and Redundancy through multiple baselines to reduce error propagation." },
+    { q: "Explain the historical evolution from astronomical surveying to GNSS.", type: "essay", e: "Early surveys used astronomical observations (sextant) for latitude/size. Triangulation networks followed for horizontal control. EDM modernized land surveying. Since the 1990s, GNSS replaced most terrestrial methods due to efficiency and global coverage." },
+    { q: "Explain the difference between plane surveying and geodetic surveying.", type: "essay", e: "Plane surveying assumes Earth is flat (valid for areas <250 km²). Geodetic surveying considers Earth curvature, uses ellipsoidal models, and applies higher precision methods for large-area control networks." }
+];
+
+let currentUser = "";
+let userAns = {};
+let isAdmin = false;
+let timerInterval;
+let startTime;
+
+function login() {
+    let inp = document.getElementById('candidateName').value.trim();
+    if(!inp) return alert("Please enter name.");
+    currentUser = inp;
+    isAdmin = (currentUser.toLowerCase() === 'krisna');
+    
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('menuScreen').classList.remove('hidden');
+    document.getElementById('userDisplay').innerHTML = isAdmin ? `<i class="fas fa-user-shield"></i> Krisna (Admin)` : currentUser;
+    
+    if(isAdmin) {
+        document.getElementById('adminInstruction').classList.remove('hidden');
+        document.getElementById('adminTools').classList.remove('hidden');
+        document.getElementById('adminCol').classList.remove('hidden');
+    }
+    refreshHistory();
+}
+
+function handleModuleClick() {
+    if(isAdmin) showMasterKey();
+    else startExam();
+}
+
+function startExam() {
+    userAns = {};
+    document.getElementById('menuScreen').classList.add('hidden');
+    document.getElementById('examScreen').classList.remove('hidden');
+    document.getElementById('displayUser').innerText = "Candidate: " + currentUser;
+    renderQuestions();
+    renderNav();
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+        let diff = Math.floor((Date.now() - startTime) / 1000);
+        let m = Math.floor(diff/60).toString().padStart(2,'0');
+        let s = (diff%60).toString().padStart(2,'0');
+        document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+    }, 1000);
+}
+
+function renderQuestions() {
+    const box = document.getElementById('qBox');
+    box.innerHTML = BANK.map((q, i) => {
+        let input = '';
+        if(q.type === 'essay') {
+            input = `<textarea oninput="saveAns(${i}, this.value)" style="width:100%; height:120px; padding:10px; border-radius:5px; border:1px solid #ddd;">${userAns[i] || ''}</textarea>`;
+        } else {
+            const labels = ['A', 'B', 'C', 'D'];
+            input = q.o.map((text, oi) => `
+                <div class="option ${userAns[i] === oi ? 'selected' : ''}" onclick="saveAns(${i}, ${oi})">
+                    <strong>${labels[oi]}.</strong> ${text}
+                </div>
+            `).join('');
+        }
+        return `<div class="card" id="q_${i}">
+            <p><strong>Question ${i+1}</strong> ${q.type==='essay' ? '<span class="badge-essay">ESSAY</span>' : ''}</p>
+            <p>${q.q}</p>${input}</div>`;
+    }).join('');
+}
+
+function saveAns(idx, val) {
+    userAns[idx] = val;
+    renderNav();
+    if(BANK[idx].type !== 'essay') renderQuestions();
+}
+
+function renderNav() {
+    document.getElementById('navGrid').innerHTML = BANK.map((_, i) => `
+        <div class="nav-btn ${userAns.hasOwnProperty(i) && userAns[i] !== "" ? 'answered' : ''}" 
+             onclick="document.getElementById('q_${i}').scrollIntoView({behavior:'smooth', block:'center'})">${i+1}</div>
+    `).join('');
+}
+
+function submitExam() {
+    clearInterval(timerInterval);
+    let score = 0;
+    BANK.forEach((q, i) => {
+        if(q.type === 'essay') { if(userAns[i] && userAns[i].length > 10) score++; }
+        else { if(userAns[i] === q.a) score++; }
+    });
+    const pct = Math.round(score/BANK.length*100);
+    saveRecord(pct);
+    showResult(pct, `Score: ${score}/${BANK.length}`);
+}
+
+function showResult(pct, info) {
+    document.getElementById('examScreen').classList.add('hidden');
+    document.getElementById('resultScreen').classList.remove('hidden');
+    document.getElementById('resScore').innerText = (pct === "ADMIN" ? "KEY" : pct + "%");
+    document.getElementById('resInfo').innerText = info;
+    
+    const labels = ['A', 'B', 'C', 'D'];
+    document.getElementById('reviewBox').innerHTML = BANK.map((q, i) => {
+        let body = '';
+        if(q.type === 'essay') {
+            body = `<div style="background:#fff3e0; padding:10px; margin-bottom:5px;"><strong>Your Answer:</strong> ${userAns[i] || '-'}</div>
+                    <div style="background:#e8f5e9; padding:10px;"><strong>Key:</strong> ${q.e}</div>`;
+        } else {
+            body = q.o.map((text, oi) => {
+                let cls = (oi === q.a) ? 'correct-view' : (userAns[i] === oi ? 'wrong-view' : '');
+                return `<div class="option ${cls}"><strong>${labels[oi]}.</strong> ${text} ${oi === q.a ? '✓' : ''}</div>`;
+            }).join('');
+        }
+        return `<div class="card"><p><strong>${i+1}. ${q.q}</strong></p>${body}</div>`;
+    }).join('');
+}
+
+function showMasterKey() {
+    userAns = {};
+    showResult("ADMIN", "Viewing Official Answers for E4.3");
+    document.getElementById('resTitle').innerText = "Master Answer Key";
+}
+
+// DATA MGMT
+function saveRecord(s) {
+    let data = JSON.parse(localStorage.getItem('krisna_pos_db') || '[]');
+    data.push({n: currentUser, s: s, d: new Date().toLocaleString()});
+    localStorage.setItem('krisna_pos_db', JSON.stringify(data));
+}
+
+function refreshHistory() {
+    let data = JSON.parse(localStorage.getItem('krisna_pos_db') || '[]');
+    document.getElementById('histBody').innerHTML = data.map((h, i) => ({...h, idx: i})).reverse().map(h => `
+        <tr>
+            <td style="padding:10px; border-bottom:1px solid #eee;">${h.n}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee;"><strong>${h.s}%</strong></td>
+            <td style="padding:10px; border-bottom:1px solid #eee;"><small>${h.d}</small></td>
+            <td class="${isAdmin?'':'hidden'}" style="text-align:center; border-bottom:1px solid #eee;">
+                <button onclick="deleteSingle(${h.idx})" style="background:none; color:red; width:auto; padding:0;"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center; padding:20px; color:#999;">No records found.</td></tr>';
+}
+
+function deleteSingle(i) {
+    if(!confirm("Delete this record?")) return;
+    let data = JSON.parse(localStorage.getItem('krisna_pos_db') || '[]');
+    data.splice(i, 1);
+    localStorage.setItem('krisna_pos_db', JSON.stringify(data));
+    refreshHistory();
+}
+
+function clearAllData() {
+    if(!confirm("WIPE ALL DATA? This cannot be undone.")) return;
+    localStorage.removeItem('krisna_pos_db');
+    refreshHistory();
+}
+
+function exportCSV() {
+    let data = JSON.parse(localStorage.getItem('krisna_pos_db') || '[]');
+    let csv = "Name,Score,Date\n" + data.map(h => `${h.n},${h.s},${h.d}`).join('\n');
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    a.download = 'Positioning_Results.csv';
+    a.click();
+}
+
+function exitExam() {
+    if(confirm("Quit exam? Progress will be lost.")) location.reload();
+}
+</script>
+</body>
+</html>
